@@ -1,0 +1,30 @@
+*{
+  margin: 0px;
+}
+
+.navbar-brand{
+     width: 110px;
+     height: 45px;
+}
+
+.navbar-brand img{
+
+    width: 105%;
+    height: 106%;
+  object-fit: contain;
+}
+
+.hide{
+    display: none;
+}
+
+
+.link-nav:hover span{
+    color: darkgrey;
+}
+
+
+.logout-button{
+    position: absolute;
+    left: 84%;
+}
