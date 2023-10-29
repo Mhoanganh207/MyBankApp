@@ -1,6 +1,7 @@
 package com.example.security.config;
 
 
+import com.example.security.model.Authority;
 import com.example.security.services.AccountDetailsService;
 import jakarta.annotation.Resource;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -41,7 +42,7 @@ public class ProjectSecureConfig  {
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http.authorizeHttpRequests((authz) -> authz
                         .requestMatchers("/account","account/services"
-                                ,"account/info","account/card").authenticated()
+                                ,"account/info","account/card").hasAuthority(String.valueOf(Authority.USER))
                         .anyRequest().permitAll()
                 );
         http.formLogin(form -> form.loginPage("/login")

@@ -1,10 +1,10 @@
 package com.example.security.controller;
 
 import com.example.security.model.Account;
+import com.example.security.model.Authority;
 import com.example.security.model.User;
 import com.example.security.services.AccountDetailsService;
 import com.example.security.services.UserService;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -15,7 +15,6 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 import org.springframework.web.servlet.view.RedirectView;
 
 import java.util.Map;
-import java.util.Set;
 
 
 @Controller
@@ -64,6 +63,7 @@ public class AccountController {
             User user = userService.createUser(allRequestParams);
             String username = allRequestParams.get("username");
             Account account = new Account(username,passwordEncoder().encode(password));
+            account.setAuthority(Authority.USER);
             user.setAccount(account);
             account.setUser(user);
             accountDetailsService.saveAccount(account);

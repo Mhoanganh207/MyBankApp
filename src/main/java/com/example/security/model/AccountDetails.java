@@ -4,6 +4,7 @@ import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
 import java.util.Collection;
+import java.util.Collections;
 
 public class AccountDetails implements UserDetails {
 
@@ -13,10 +14,9 @@ public class AccountDetails implements UserDetails {
         this.account= account;
     }
 
-
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
-        return null;
+        return Collections.singleton(account.getAuthority());
     }
 
     @Override
