@@ -4,6 +4,7 @@ import com.example.security.services.AccountDetailsService;
 import com.example.security.services.JwtService;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
+import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -16,50 +17,63 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
+import java.util.Arrays;
+import java.util.Optional;
+
 @Component
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
+    @Autowired
     private JwtService jwtService;
 
+    @Autowired
     private AccountDetailsService accountDetailsService;
 
-    public JwtAuthenticationFilter(JwtService jwtService, AccountDetailsService accountDetailsService) {
-        this.jwtService = jwtService;
-        this.accountDetailsService = accountDetailsService;
-    }
 
 
     @Override
     protected void doFilterInternal(
-
-
-            HttpServletRequest request,
+            @NonNull HttpServletRequest request,
             @NonNull HttpServletResponse response,
-            @NonNull FilterChain filterChain)
-            throws ServletException, IOException {
+            @NonNull FilterChain filterChain) throws ServletException, IOException {
+        try {
+            Cookie[] cookies = request.getCookies();
+            Optional<Cookie> isTokenThere = Arrays.stream(cookies).filter(cookie -> cookie.getName().equals("JwtToken")).findFirst();
 
-           final String authorizationHeader = request.getHeader("Authorization");
-           final String jwt,username;
+            if(isTokenThere.isEmpty()){
+                System.out.println("empty");
+                filterChain.doFilter(request,response);
+                return;
+            }
+            System.out.println("exist");
+            String token,username;
+            token = isTokenThere.get().getValue();
+            username = jwtService.extractUsername(token);
+            System.out.println("username: " + username);
+            System.out.println("token: " + token);
+            System.out.println("auth: " + SecurityContextHolder.getContext().getAuthentication());
+            if (username != null && SecurityContextHolder.getContext().getAuthentication() == null) {
 
 
-           if (authorizationHeader == null || !authorizationHeader.startsWith("Bearer ")) {
-               filterChain.doFilter(request, response);
-               return;
-           }
-           jwt = authorizationHeader.substring(7);
-           username = jwtService.extractUsername(jwt);
-           if (username != null && SecurityContextHolder.getContext().getAuthentication() == null) {
-                  UserDetails userDetails = this.accountDetailsService.loadUserByUsername(username);
-                  if (jwtService.isValidToken(jwt, userDetails)) {
-                      UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(
-                                userDetails, null, userDetails.getAuthorities());
-                      authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
-                        SecurityContextHolder.getContext().setAuthentication(authToken);
+                UserDetails userDetails = accountDetailsService.loadUserByUsername(username);
+                System.out.println(userDetails.getUsername());
 
-                  }
+                if (jwtService.isValidToken(token,userDetails)){
+                    System.out.println("valid");
+                    UsernamePasswordAuthenticationToken newtoken =
+                            new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
+                    newtoken.setDetails( new WebAuthenticationDetailsSource().buildDetails(request));
+                    SecurityContextHolder.getContext().setAuthentication(newtoken);
 
-           }
-           filterChain.doFilter(request, response);
+                }
+                filterChain.doFilter(request,response);
+
+            }
+        }
+        catch (NullPointerException e){
+           filterChain.doFilter(request,response);
+        }
+
 
     }
 }

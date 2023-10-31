@@ -4,6 +4,7 @@ import com.example.security.model.Account;
 import com.example.security.services.AccountDetailsService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -17,6 +18,7 @@ public class ServiceController {
 
     @GetMapping("/account")
     public String myAccount(Model model, Authentication authentication){
+        System.out.println(SecurityContextHolder.getContext().getAuthentication());
         String username = authentication.getName();
         Account account = accountService.findByUsername(username).get();
         model.addAttribute("greet","Hello " + account.getUsername());

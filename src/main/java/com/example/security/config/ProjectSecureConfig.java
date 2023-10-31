@@ -4,25 +4,33 @@ package com.example.security.config;
 import com.example.security.model.Authority;
 import com.example.security.services.AccountDetailsService;
 import jakarta.annotation.Resource;
+import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.ProviderManager;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
+import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.provisioning.InMemoryUserDetailsManager;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.security.web.authentication.www.BasicAuthenticationFilter;
 
 import javax.sql.DataSource;
 
 
 @Configuration
 @EnableMethodSecurity
+@RequiredArgsConstructor
 public class ProjectSecureConfig  {
 
     @Autowired
@@ -32,22 +40,38 @@ public class ProjectSecureConfig  {
     private AccountDetailsService accountDetailsService;
 
 
+    private final JwtAuthenticationFilter jwtAuthenticationFilter;
+
+
+    private final JwtGeneratorFilter jwtGeneratorFilter;
 
 
     @Bean
     public DaoAuthenticationProvider authenticationProvider() {
-        return new MyAuthenticationProvider(this.accountDetailsService,passwordEncoder());
+        return new MyAuthenticationProvider(accountDetailsService,passwordEncoder());
     }
+
+    @Bean
+    public AuthenticationManager authenticationManager() throws Exception {
+        return new ProviderManager(authenticationProvider());
+    }
+
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+        http.formLogin(form -> form.loginPage("/signin")
+                .failureUrl("/signin?error=true")
+                .defaultSuccessUrl("/account", true)
+                .loginProcessingUrl("/demo")
+
+
+
+        );
         http.authorizeHttpRequests((authz) -> authz
                         .requestMatchers("/account","account/services"
                                 ,"account/info","account/card").hasAuthority(String.valueOf(Authority.USER))
+                        .requestMatchers(HttpMethod.POST,"/demo").permitAll()
                         .anyRequest().permitAll()
                 );
-        http.formLogin(form -> form.loginPage("/login")
-                .failureUrl("/login?error=true")
-                .defaultSuccessUrl("/account", true));
         http.rememberMe(rememberMe -> rememberMe
                 .key("mySecretKey")
                 .userDetailsService(this.accountDetailsService)
@@ -55,14 +79,18 @@ public class ProjectSecureConfig  {
         );
         http.logout(logout -> logout.logoutUrl("/logout")
                 .logoutSuccessUrl("/")
-                .deleteCookies("JSESSIONID")
         );
 
+        http.authenticationProvider(authenticationProvider());
+
+        http.sessionManagement(sessionManagement -> sessionManagement
+                .sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED)
+
+                );
+
+        http.addFilterAfter(jwtGeneratorFilter, BasicAuthenticationFilter.class);
+        http.addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
         http.csrf(AbstractHttpConfigurer::disable);
-
-
-
-
 
         return http.build();
     }

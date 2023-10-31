@@ -6,11 +6,14 @@ import com.example.security.model.User;
 import com.example.security.services.AccountDetailsService;
 import com.example.security.services.UserService;
 import org.springframework.context.annotation.ComponentScan;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 import org.springframework.web.servlet.view.RedirectView;
 
@@ -36,19 +39,6 @@ public class AccountController {
     }
 
 
-    @RequestMapping( value ="/login", method = RequestMethod.GET )
-    public String signIn(@RequestParam(required = false) String error, Model model){
-        try{
-            if(error.equals("true")){
-                System.out.println("true");
-                model.addAttribute("valid",0);
-            }
-            return "signin";
-        }
-        catch (NullPointerException e){
-            return "signin";
-        }
-    }
     @RequestMapping(value = "/signup",method = RequestMethod.GET)
     public String signUp(){
         return "signup";
