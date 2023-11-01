@@ -18,7 +18,6 @@ public class ServiceController {
 
     @GetMapping("/account")
     public String myAccount(Model model, Authentication authentication){
-        System.out.println(SecurityContextHolder.getContext().getAuthentication());
         String username = authentication.getName();
         Account account = accountService.findByUsername(username).get();
         model.addAttribute("greet","Hello " + account.getUsername());

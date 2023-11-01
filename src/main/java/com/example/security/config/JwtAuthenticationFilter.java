@@ -9,10 +9,13 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.lang.NonNull;
+import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.web.AuthenticationEntryPoint;
 import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
+import org.springframework.security.web.authentication.www.BasicAuthenticationFilter;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
@@ -23,8 +26,7 @@ import java.util.Optional;
 @Component
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
-    @Autowired
-    private JwtService jwtService;
+    private final JwtService jwtService = new JwtService();
 
     @Autowired
     private AccountDetailsService accountDetailsService;
@@ -41,25 +43,16 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             Optional<Cookie> isTokenThere = Arrays.stream(cookies).filter(cookie -> cookie.getName().equals("JwtToken")).findFirst();
 
             if(isTokenThere.isEmpty()){
-                System.out.println("empty");
                 filterChain.doFilter(request,response);
                 return;
             }
-            System.out.println("exist");
             String token,username;
             token = isTokenThere.get().getValue();
             username = jwtService.extractUsername(token);
-            System.out.println("username: " + username);
-            System.out.println("token: " + token);
-            System.out.println("auth: " + SecurityContextHolder.getContext().getAuthentication());
             if (username != null && SecurityContextHolder.getContext().getAuthentication() == null) {
-
-
                 UserDetails userDetails = accountDetailsService.loadUserByUsername(username);
-                System.out.println(userDetails.getUsername());
 
                 if (jwtService.isValidToken(token,userDetails)){
-                    System.out.println("valid");
                     UsernamePasswordAuthenticationToken newtoken =
                             new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
                     newtoken.setDetails( new WebAuthenticationDetailsSource().buildDetails(request));
@@ -69,6 +62,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 filterChain.doFilter(request,response);
 
             }
+
         }
         catch (NullPointerException e){
            filterChain.doFilter(request,response);

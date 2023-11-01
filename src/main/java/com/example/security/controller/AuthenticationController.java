@@ -36,7 +36,7 @@ public class AuthenticationController {
         this.authenticationManager = authenticationManager;
     }
 
-    @RequestMapping( value ="/signin", method = RequestMethod.GET )
+    @RequestMapping( value ="/login", method = RequestMethod.GET )
     public String signIn(@RequestParam(required = false) String error, Model model){
         try{
             if(error.equals("true")){
@@ -47,6 +47,11 @@ public class AuthenticationController {
         catch (NullPointerException e){
             return "signin";
         }
+    }
+
+    @RequestMapping( value ="/auth", method = RequestMethod.GET )
+    public RedirectView failed(){
+        return new RedirectView("/login?error=true");
     }
 
 

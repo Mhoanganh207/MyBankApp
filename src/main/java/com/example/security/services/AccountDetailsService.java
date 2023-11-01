@@ -14,7 +14,10 @@ import java.util.Optional;
 @Service
 public class AccountDetailsService implements UserDetailsService {
 
-    @Autowired
+    public AccountDetailsService(AccountRepository accountRepository) {
+        this.accountRepository = accountRepository;
+    }
+
     private AccountRepository accountRepository;
     @Override
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {

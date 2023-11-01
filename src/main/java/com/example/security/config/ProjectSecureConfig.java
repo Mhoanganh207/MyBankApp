@@ -43,7 +43,7 @@ public class ProjectSecureConfig  {
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
 
 
-    private final JwtGeneratorFilter jwtGeneratorFilter;
+
 
 
     @Bean
@@ -56,20 +56,18 @@ public class ProjectSecureConfig  {
         return new ProviderManager(authenticationProvider());
     }
 
+
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
-        http.formLogin(form -> form.loginPage("/signin")
-                .failureUrl("/signin?error=true")
+        http.formLogin(form -> form.loginPage("/login")
+                .failureUrl("/login?error=true")
                 .defaultSuccessUrl("/account", true)
-                .loginProcessingUrl("/demo")
-
-
-
+                .loginProcessingUrl("/login")
         );
         http.authorizeHttpRequests((authz) -> authz
-                        .requestMatchers("/account","account/services"
-                                ,"account/info","account/card").hasAuthority(String.valueOf(Authority.USER))
-                        .requestMatchers(HttpMethod.POST,"/demo").permitAll()
+                        .requestMatchers("/account/**").authenticated()
+
+                        .requestMatchers(HttpMethod.POST,"/login").permitAll()
                         .anyRequest().permitAll()
                 );
         http.rememberMe(rememberMe -> rememberMe
@@ -79,16 +77,14 @@ public class ProjectSecureConfig  {
         );
         http.logout(logout -> logout.logoutUrl("/logout")
                 .logoutSuccessUrl("/")
+                .deleteCookies("JwtToken")
         );
-
-        http.authenticationProvider(authenticationProvider());
-
         http.sessionManagement(sessionManagement -> sessionManagement
-                .sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED)
+                .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
 
                 );
 
-        http.addFilterAfter(jwtGeneratorFilter, BasicAuthenticationFilter.class);
+        http.addFilterBefore(new JwtGeneratorFilter(authenticationManager(), accountDetailsService), UsernamePasswordAuthenticationFilter.class);
         http.addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
         http.csrf(AbstractHttpConfigurer::disable);
 
@@ -121,6 +117,7 @@ public class ProjectSecureConfig  {
         return new InMemoryUserDetailsManager(user,admin);
 
     }
+
 
 
 

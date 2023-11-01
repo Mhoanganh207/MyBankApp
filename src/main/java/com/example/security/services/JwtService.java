@@ -15,7 +15,7 @@ import java.util.Map;
 import java.util.function.Function;
 
 
-@Service
+
 public class JwtService {
 
 
@@ -40,10 +40,10 @@ public class JwtService {
         return Keys.hmacShaKeyFor(secretBytes);
     }
 
-    public String generateToken(Map<String, Object> extraClaims, AccountDetails accountDetails) {
+    public String generateToken(Map<String, Object> extraClaims, String username) {
         return Jwts.builder().
                 setClaims(extraClaims)
-                .setSubject(accountDetails.getUsername())
+                .setSubject(username)
                 .setIssuedAt(new Date(System.currentTimeMillis()))
                 .setExpiration(new Date(System.currentTimeMillis() + 1000 * 60 * 60))
                 .signWith(SignatureAlgorithm.HS256,getSigningKey())
@@ -51,8 +51,8 @@ public class JwtService {
     }
 
 
-    public String generateToken(AccountDetails accountDetails) {
-        return generateToken(Map.of(), accountDetails);
+    public String generateToken(String username) {
+        return generateToken(Map.of(), username);
     }
 
     public boolean isValidToken(String jwt, UserDetails accountDetails) {
